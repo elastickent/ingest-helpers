@@ -1,0 +1,20 @@
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir elasticsearch nltk python-dotenv
+
+# Download NLTK data
+RUN python -c "import nltk; nltk.download('punkt', quiet=True)"
+
+# Make port 9200 available to the world outside this container
+EXPOSE 9200
+
+# Run script.py when the container launches
+ENTRYPOINT ["python", "script.py"]

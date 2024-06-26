@@ -1,6 +1,6 @@
 # Elasticsearch Recurring Sentence Analyzer
 
-This Docker container runs a Python script that analyzes recurring sentences at the beginning and end of documents in an Elasticsearch index.
+This Docker container runs a Python script that analyzes recurring sentences at the beginning and end of documents in an Elasticsearch index. It can also generate an ingest pipeline to remove these common sentences and provide instructions for reindexing.
 
 ## Prerequisites
 
@@ -39,7 +39,7 @@ To run the script, use the following command:
 docker run -it --network host \
   -v /path/to/your/ca_cert.crt:/app/ca_cert.crt \
   -v /path/to/your/.env:/app/.env \
-  elasticsearch-analyzer <index_name> <field_name>
+  elasticsearch-analyzer <index_name> <field_name> [--output-pipeline]
 ```
 
 Replace the following:
@@ -47,6 +47,7 @@ Replace the following:
 - `/path/to/your/.env`: The path to your .env file on your host machine.
 - `<index_name>`: The name of the Elasticsearch index you want to analyze.
 - `<field_name>`: The name of the field in the documents that contains the text to analyze.
+- `[--output-pipeline]`: Optional flag to generate and print an Elasticsearch ingest pipeline and reindex instructions.
 
 For example:
 
@@ -54,7 +55,7 @@ For example:
 docker run -it --network host \
   -v /Users/kent/github/servicenow-utils/http_ca.crt:/app/ca_cert.crt \
   -v /Users/kent/github/servicenow-utils/.env:/app/.env \
-  elasticsearch-analyzer www-ornl body_content
+  elasticsearch-analyzer www-ornl body_content --output-pipeline
 ```
 
 This command does the following:
@@ -63,42 +64,58 @@ This command does the following:
 - `-v /path/to/your/ca_cert.crt:/app/ca_cert.crt`: Mounts your CA certificate into the container.
 - `-v /path/to/your/.env:/app/.env`: Mounts your .env file into the container.
 
-Example output
+## Ingest Pipeline and Reindexing
 
+If you use the `--output-pipeline` flag, the script will generate and print:
+1. An Elasticsearch ingest pipeline definition
+2. A reindex command
+3. Instructions for using these in Kibana's Dev Console
+
+To use the generated pipeline and reindex your data:
+
+1. Run the script with the `--output-pipeline` flag.
+2. Copy the output between the "Elasticsearch Ingest Pipeline" delimiters and execute it in Kibana's Dev Console.
+3. Copy the output between the "Reindex Command" delimiters and execute it in Kibana's Dev Console.
+4. Follow the printed instructions to verify and start using your new, cleaned index.
+
+Example of saving the output to a file:
+
+```bash
+docker run -it --network host \
+  -v /path/to/your/ca_cert.crt:/app/ca_cert.crt \
+  -v /path/to/your/.env:/app/.env \
+  elasticsearch-analyzer www-ornl body_content --output-pipeline > pipeline_and_reindex_commands.txt
 ```
-Analyzed 10000 randomly sampled documents from index 'www-ornl', field 'body_content'
 
-Recurring sentences at the beginning of documents:
-- Credit: Carlos Jones/ORNL, U.S. Dept. (Occurrences: 57)
-- Credit: ORNL, U.S. Dept. (Occurrences: 36)
-- Oak Ridge National Laboratory 1 Bethel Valley Road Oak Ridge, TN 37830 (+1) 865.576.7658 Connect With Us Partnerships Visit Contact News Newsroom Newsletter Signup Media Contacts Research Science Areas User Facilities Centers & Institutes Resources Internal Users Directory Oak Ridge National Laboratory is managed by UT-Battelle LLC for the US Department of Energy Privacy Accessibility/508 Nondiscrimination/1557 Vulnerability Disclosure Program (Occurrences: 30)
-- He received his B.S. (Occurrences: 26)
-- Media may use the resources listed below or send questions to news@ornl.gov . (Occurrences: 18)
-- Credit: Genevieve Martin/ORNL, U.S. Dept. (Occurrences: 15)
-- Dept. (Occurrences: 12)
-- Skip to main content twitter facebook linkedin youtube flickr Partnerships Visit Contact Menu Science Areas Biology & Environment Clean Energy Fusion & Fission Isotopes Physical Sciences National Security Neutron Science Supercomputing Work With Us User Facilities Educational Programs Procurement Small Business Programs About Us Overview Leadership Team Initiatives Visiting ORNL Our Values Community Diversity History Fact Sheets Virtual Tour Careers News Hit enter to search or ESC to close Sheng Dai SH-RPR Separations and Polymer Chemistry Contact dais@ornl.gov | 865.576.7307 Bio Dr. Sheng Dai is currently a corporate fellow and section head overseeing four research groups in the areas of separations and polymer chemistry at Chemical Sciences Division, Oak Ridge National Laboratory (ORNL) and a Professor of Chemistry at the University of Tennessee, Knoxville (UTK). (Occurrences: 11)
-- His current research interests include ionic liquids, porous materials, and their applications for separation sciences and energy storage as well as catalysis by nanomaterials. (Occurrences: 11)
-- He was named US DOE Distinguished Scientist Fellow for pioneering advances in development of functional materials in 2022. (Occurrences: 11)
-
-Recurring sentences at the end of documents:
-- For more information, please visit energy.gov/science . (Occurrences: 136)
-- The Office of Science is working to address some of the most pressing challenges of our time. (Occurrences: 120)
-- DOE’s Office of Science is working to address some of the most pressing challenges of our time. (Occurrences: 105)
-- Oak Ridge National Laboratory 1 Bethel Valley Road Oak Ridge, TN 37830 (+1) 865.576.7658 Connect With Us Partnerships Visit Contact News Newsroom Newsletter Signup Media Contacts Research Science Areas User Facilities Centers & Institutes Resources Internal Users Directory Oak Ridge National Laboratory is managed by UT-Battelle LLC for the US Department of Energy Privacy Accessibility/508 Nondiscrimination/1557 Vulnerability Disclosure Program (Occurrences: 75)
-- UT-Battelle manages ORNL for the Department of Energy’s Office of Science, the single largest supporter of basic research in the physical sciences in the United States. (Occurrences: 58)
-- The Office of Science is the single largest supporter of basic research in the physical sciences in the United States, and is working to address some of the most pressing challenges of our time. (Occurrences: 49)
-- Media Contact Communications Staff news@ornl.gov 865.576.1946 Oak Ridge National Laboratory 1 Bethel Valley Road Oak Ridge, TN 37830 (+1) 865.576.7658 Connect With Us Partnerships Visit Contact News Newsroom Newsletter Signup Media Contacts Research Science Areas User Facilities Centers & Institutes Resources Internal Users Directory Oak Ridge National Laboratory is managed by UT-Battelle LLC for the US Department of Energy Privacy Accessibility/508 Nondiscrimination/1557 Vulnerability Disclosure Program (Occurrences: 46)
-- For more information, please visit http://energy.gov/science/ . (Occurrences: 45)
-- For more information, visit https://energy.gov/science . (Occurrences: 37)
-- UT-Battelle manages ORNL for DOE’s Office of Science, the single largest supporter of basic research in the physical sciences in the United States. (Occurrences: 36)
-```
+This will save the entire output, including the pipeline, reindex command, and instructions to `pipeline_and_reindex_commands.txt`.
 
 ## Notes
 
 - Ensure your Elasticsearch instance is running and accessible.
 - The script uses the connection details specified in the .env file.
 - The script analyzes a random sample of 10,000 documents from the specified index.
+- The script extracts the first and last 5 sentences from each document for analysis. You can modify this by changing the `num_sentences` parameter in the `get_start_end_sentences()` function in the script.
 
 ## Security Note
 
 The .env file contains sensitive information. Make sure to keep it secure and never commit it to version control systems.
+
+## Troubleshooting
+
+If you encounter connection issues:
+1. Ensure your Elasticsearch instance is running and accessible from your host machine.
+2. Check that the ES_HOST in your .env file is correct and accessible from within the Docker container.
+3. Verify that the CA certificate path is correct and the certificate is valid.
+4. If using Docker Desktop on macOS or Windows, you might need to use `host.docker.internal` instead of `localhost` in your ES_HOST.
+
+## Customization
+
+You can modify the script to change the number of documents sampled or the number of sentences analyzed from each document. These changes would require rebuilding the Docker image.
+
+## Contributing
+
+Feel free to fork this repository and submit pull requests with any enhancements.
+
+## License
+
+This project is open-sourced under the MIT license.

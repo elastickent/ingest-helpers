@@ -5,6 +5,8 @@ import nltk
 from nltk.tokenize import sent_tokenize
 import os
 from dotenv import load_dotenv
+import json
+import re
 
 # Load environment variables from .env file
 load_dotenv()
@@ -13,6 +15,7 @@ load_dotenv()
 parser = argparse.ArgumentParser(description="Analyze recurring sentences in Elasticsearch documents")
 parser.add_argument("index_name", help="Name of the Elasticsearch index to search")
 parser.add_argument("field_name", help="Name of the field to analyze for recurring sentences")
+parser.add_argument("--output-pipeline", action="store_true", help="Output Elasticsearch ingest pipeline")
 args = parser.parse_args()
 
 # Download the necessary NLTK data
@@ -85,3 +88,46 @@ for sentence in recurring_start[:10]:  # Print top 10 most common start sentence
 print("\nRecurring sentences at the end of documents:")
 for sentence in recurring_end[:10]:  # Print top 10 most common end sentences
     print(f"- {sentence} (Occurrences: {end_counts[sentence]})")
+
+# Output Elasticsearch ingest pipeline if flag is set
+if args.output_pipeline:
+    pipeline = {
+        "description": "Pipeline to remove common start and end sentences",
+        "processors": []
+    }
+
+    for sentence in recurring_start[:10] + recurring_end[:10]:
+        escaped_sentence = re.escape(sentence).replace('/', '\\/')
+        processor = {
+            "gsub": {
+                "field": args.field_name,
+                "pattern": f"^{escaped_sentence}\\s*|\\s*{escaped_sentence}$",
+                "replacement": ""
+            }
+        }
+        pipeline["processors"].append(processor)
+
+    print("\n--- Elasticsearch Ingest Pipeline ---")
+    print("PUT _ingest/pipeline/remove_common_sentences")
+    print(json.dumps(pipeline, indent=2))
+    print("---------------------------------------")
+
+    print("\n--- Reindex Command ---")
+    reindex_body = {
+        "source": {
+            "index": args.index_name
+        },
+        "dest": {
+            "index": f"{args.index_name}_cleaned",
+            "pipeline": "remove_common_sentences"
+        }
+    }
+    print("POST _reindex")
+    print(json.dumps(reindex_body, indent=2))
+    print("------------------------")
+
+    print("\nInstructions:")
+    print("1. Copy and paste the Elasticsearch Ingest Pipeline into Kibana's Dev Console and execute it.")
+    print("2. Then, copy and paste the Reindex Command into the Dev Console and execute it.")
+    print("3. This will create a new index called '{}_cleaned' with the common sentences removed.".format(args.index_name))
+    print("4. After reindexing, verify the new index and update your applications to use the new index if everything looks correct.")
