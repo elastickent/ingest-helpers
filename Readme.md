@@ -106,7 +106,6 @@ If you encounter connection issues:
 1. Ensure your Elasticsearch instance is running and accessible from your host machine.
 2. Check that the ES_HOST in your .env file is correct and accessible from within the Docker container.
 3. Verify that the CA certificate path is correct and the certificate is valid.
-4. If using Docker Desktop on macOS or Windows, you might need to use `host.docker.internal` instead of `localhost` in your ES_HOST.
 
 ## Customization
 
@@ -116,6 +115,3 @@ You can modify the script to change the number of documents sampled or the numbe
 
 Feel free to fork this repository and submit pull requests with any enhancements.
 
-## License
-
-This project is open-sourced under the MIT license.
