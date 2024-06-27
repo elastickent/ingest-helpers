@@ -21,7 +21,7 @@ args = parser.parse_args()
 # Download the necessary NLTK data
 nltk.download('punkt', quiet=True)
 
-# Get Elasticsearch connection details from environment variables
+# Get Elasticsearch connection details from .env file
 es_host = os.getenv('ES_HOST', 'https://localhost:9200')
 es_user = os.getenv('ES_USER', 'elastic')
 es_password = os.getenv('ES_PASSWORD')
@@ -29,7 +29,7 @@ es_password = os.getenv('ES_PASSWORD')
 if not es_password:
     raise ValueError("ES_PASSWORD must be set in the .env file")
 
-# Connect to Elasticsearch using environment variables
+# Connect to Elasticsearch 
 es = Elasticsearch(
     [es_host],
     basic_auth=(es_user, es_password),
